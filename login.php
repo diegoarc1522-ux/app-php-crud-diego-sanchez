@@ -20,11 +20,10 @@ if ($_SERVER["REQUEST_METHOD"] === 'POST'){
     if($usuario && $password == $usuario['password']){
 
         $_SESSION['id_usuario'] = $usuario['id_usuario']; 
-        $_SESSION['nombre'] = 'Diego Sanchez';
+        $_SESSION['nombre'] = $usuario['nombre'];
         $_SESSION['rol'] = $usuario['rol'];
 
         header('Location: index.php');
- 
         echo "Igresaste Exiosamente 😊";
     }else{
         echo "Usuario o Contraseña Incorrecta. 😒";

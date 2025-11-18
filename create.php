@@ -1,31 +1,17 @@
+
+
 <?php
 require 'config/db.php';
-include 'includes/header.php';
 require 'includes/funciones.php';
+include 'includes/header.php';
 
-// ======= CONSULTA INNER JOIN PARA LISTAR PRODUCTOS =======
-$sql = "
-    SELECT p.id_producto,
-           p.nombre,
-           p.descripcion,
-           p.precio,
-           p.stock,
-           m.nombre AS marca,
-           c.nombre AS categoria
-    FROM productos p
-    INNER JOIN marcas m ON p.id_marca = m.id_marca
-    INNER JOIN categorias c ON p.id_categoria = c.id_categoria
-";
-
-$stmt = $pdo->query($sql);
-$productos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-// ======= OBTENER DATOS PARA EL FORMULARIO =======
-$categorias = obtenerCategoria($pdo);
+$creado_por = $_SESSION["id_usuario"];
 $marcas = obtenerMarca($pdo);
+$categorias = obtenerCategoria($pdo);
 
-// ======= GUARDAR PRODUCTO =======
-if ($_SERVER["REQUEST_METHOD"] === 'POST'){
+//var_dump($marcas, $categorias);
+
+if ($_SERVER["REQUEST_METHOD"] === 'POST') {
 
     $nombre = $_POST["nombre"];
     $precio = $_POST["precio"];
@@ -34,62 +20,97 @@ if ($_SERVER["REQUEST_METHOD"] === 'POST'){
     $id_marca = $_POST["id_marca"];
     $id_categoria = $_POST["id_categoria"];
 
-    $stmt = $pdo->prepare("
-        INSERT INTO productos (nombre, descripcion, precio, stock, id_marca, id_categoria) 
-        VALUES (?,?,?,?,?,?)
-    ");
+   
 
-    $stmt->execute([$nombre, $descripcion, $precio, $stock, $id_marca, $id_categoria]);
 
-    header("Location: index.php");
-    exit;
+    try {
+        $stmt = $pdo->prepare(
+            "INSERT INTO PRODUCTOS (nombre, descripcion, precio, stock, id_marca, id_categoria, creado_por)  
+        VALUES (?,?,?,?,?,?,?)"
+        );
+        $stmt->execute([$nombre, $descripcion, $precio, $stock, $id_marca, $id_categoria, $creado_por]);
+        echo "<script>
+            Swal.fire({
+                title: 'Producto Guardado',
+                text: 'Producto Registrado Correctamente',
+                icon: 'success'
+            }).then(()=>window.location='index.php');
+        </script>
+        ";
+    } catch (PDOException $e) {
+        $error = addslashes($e->getMessage());
+        echo "
+        <script>
+            Swal.fire({
+                title: 'Error al Guardar',
+                text: '$error',
+                icon: 'error'
+            });
+        </script>
+        ";
+    }
+    //header("Location: index.php");
+    //exit;
+    //echo
+    //var_dump|
+    //die
+    //dd
+    //var_dump($nombre, $precio, $descripcion, $stock);
 }
+
+
 ?>
 
 <h2>Agregar Nuevo Producto ➕</h2>
-
-<form method="POST" >
-  <div class="mb-3">
-    <label for="nombre" class="form-label">Nombre</label>
-    <input type="text" class="form-control" id="nombre" name="nombre">
-  </div>
+<form method="POST">
     <div class="mb-3">
-    <label for="descripcion" class="form-label">Descripcion</label>
-    <input type="text" class="form-control" id="descripcion" name="descripcion">
-  </div>
+        <label
+            for="nombre"
+            class="form-label">Nombre</label>
+        <input
+            type="text"
+            class="form-control"
+            id="nombre"
+            name="nombre" required>
+    </div>
     <div class="mb-3">
-    <label for="precio" class="form-label">Precio</label>
-    <input type="text" class="form-control" id="precio" name="precio">
-  </div>
+        <label for="descripcion" class="form-label">Descripción</label>
+        <input type="text" class="form-control" id="descripcion" name="descripcion" required>
+    </div>
     <div class="mb-3">
-    <label for="stock" class="form-label">Stock</label>
-    <input type="text" class="form-control" id="stock" name="stock">
-  </div>
-  <div class="mb-3">
-    <label for="marca">Marca</label>
-    <select name="id_marca" class="form-select" aria-label="Default select example">
-      <option selected>Seleccion una Marca</option>
-      <?php foreach($marcas as $item): ?>
-      <option value="<?= $item['id_marca']?>"><?= $item['nombre']?></option>
-      <?php endforeach; ?>
-    </select>
-  </div>
-  <div class="mb-3">
-    <label for="categoria">Categoria</label>
-    <select name="id_categoria" class="form-select" aria-label="Default select example">
-      <option selected>Seleccione una Categoria</option>
-      <?php foreach($categorias as $item): ?>
-      <option value="<?= $item['id_categoria']?>"><?= $item['nombre']?></option>
-      <?php endforeach; ?>
-    </select>
-  </div>
+        <label for="precio" class="form-label">Precio</label>
+        <input type="text" class="form-control" id="precio" name="precio" required>
+    </div>
+    <div class="mb-3">
+        <label for="stock" class="form-label">Stock</label>
+        <input type="text" class="form-control" id="stock" name="stock" required>
+    </div>
+    <div class="mb-3">
+        <label for="marca">Marca</label>
+        <select name="id_marca" class="form-select">
+            <option selected>Seleccione una marca</option>
+            <?php foreach ($marcas as $item): ?>
+                <option value="<?= $item['id_marca'] ?>">
+                    <?= $item['nombre'] ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+    </div>
+    <div class="mb-3">
+        <label for="categoria">Categoria</label>
+        <select name="id_categoria" class="form-select">
+            <option selected>Seleccione una categoria</option>
+            <?php foreach ($categorias as $item): ?>
+                <option value="<?= $item['id_categoria'] ?>">
+                    <?= $item['nombre'] ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+    </div>
 
+    <button type="submit" class="btn btn-primary">Guardar</button>
 
-
-  <button type="submit" class="btn btn-primary">Guardar</button>
 </form>
-
-
 
 
 <?php
